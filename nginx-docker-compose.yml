@@ -1,0 +1,40 @@
+version: "3.9"                                     ## Compose file format version being used.
+services:                                          ## top-level field defining all the containers (services) to run in the application. 
+  nginx:                                           ## Specifies the name of the service.
+    image: nginx:latest                            ## Docker image to use for this service. 
+    container_name: Nginx-service                  ## Name of the container. 
+    deploy:                                        ## Specifies the number of instances and resource.
+      replicas: 4                                  ## Always run 2 Replica instance of this service.
+      resources:                                   ## Under this section we will define limits
+        limits:                                    ## The maximum amount
+          cpus: "4"                                ## The maximum amount of CPU
+          memory: "8G"                             ## The maximum amount of memory
+        reservations:                              ## The minimum resources
+          cpus: "1"                                ## The minimum resources of CPU
+          memory: "2G"                             ## The minimum resources of memory
+      restart_policy:                              ## Restart Policy and conditions
+        condition: on-failure                      ## Restart the container only if it fails (on-failure).
+        delay: 5s                                  ## Wait 5 seconds between restart attempts.
+        max_attempts: 3                            ## Retry up to 3 times.
+        window: 30s                                ## Evaluate failures within a 60-second window.
+      update_config:                               ## Controls how updates are applied to this service during a docker service update
+        parallelism: 2                             ## Update two container at a time.
+        delay: 5s                                  ## Wait 10 seconds between updates to individual containers.
+        failure_action: rollback                   ## If build fails, roll back to previous version.
+    healthcheck:                                   ## Monitor the health of a container.
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]  ## Defines the command Docker runs to check the container's health.
+      interval: 30s                                ## How often Docker runs the health check command.
+      timeout: 10s                                 ## Maximum amount of time Docker waits for the health check command to complete.
+      retries: 3                                   ## Number of times Docker retries the health check
+    volumes:                                       ## Defines named volumes for mapping host files/directories to container path. 
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro      ## Mount the nginx.conf file to container.
+      - /usr/local/ssl:/usr/local/ssl:ro           ## Provides SSL certificates for secure communication.
+    ports:                                         ## Mount the ports
+      - 8443:8443                                  ## Map 8443 on the host to 8443 to the container
+      - 443:443                                    ## Map 433 on the host to 433 to the container
+    #depends_on:                                   ## Indicates that this service depends on another service, and will not start until that service.   
+    #  - mssql
+    #  - mysql
+    #  - redis
+    #  - any-frontend
+    #  - any-backend
