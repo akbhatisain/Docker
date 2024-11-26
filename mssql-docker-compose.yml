@@ -1,0 +1,41 @@
+## This is production ready compose file which can be used in your infra.
+## This file can be use in docker-compose and docker swarm stack.
+## This file contains maximum number of the available option in docker.
+## It will create a scallable, high available, and auto healing MSSQL containers. 
+version: "3.9"                                          ## Compose file format version being used.
+services:                                               ## top-level field defining all the containers (services) to run in the application.
+  mssql:                                                ## Specifies the name of the service. 
+    image: 'mcr.microsoft.com/azure-sql-edge:latest'    ## Docker image to use for this service.
+# image: 'mcr.microsoft.com/mssql/server:2022-latest'
+    container_name: Project_Name-Prod-DBServer           ## Name of the container.
+    deploy:                                             ## Specifies the number of instances and resource.
+      replicas: 4                                       ## Always run 4 Replica instance of this service.
+      resources:                                        ## Under this section we will define limits
+        limits:                                         ## The maximum amount
+          cpus: "8"                                     ## The maximum amount of CPU (8 cores)the service can consume.
+          memory: "16G"                                  ## The maximum amount of memory (16GB) the service can consume.
+        reservations:                                   ## The minimum resources
+          cpus: "2"                                     ## The minimum resources of CPU
+          memory: "4G"                                  ## The minimum resources of memory
+      restart_policy:                                   ## Restart Policy and conditions
+        condition: on-failure                           ## Restart the container only if it fails (on-failure).
+        delay: 5s                                       ## Wait 5 seconds between restart attempts.
+        max_attempts: 3                                 ## Retry up to 3 times.
+        window: 60s                                     ## Evaluate failures within a 60-second window.
+      update_config:                                    ## Controls how updates are applied to this service during a docker service update
+        parallelism: 1                                  ## Update one container at a time.
+        delay: 10s                                      ## Wait 10 seconds between updates to individual containers.
+    environment:                                        ## Set environment variables.
+        ACCEPT_EULA: 'Y'                                ## Accept the SQL Server license agreement.  
+        SA_PASSWORD: 'sa@12345'                         ## Set the password for the SQL Server Admin Account (SA).
+    ports:                                              ## Mount the ports
+        - '1433:1433'                                   ## Map 1433 on the host to 1433 to the container
+    expose:                                             ## Makes a port accessible to other containers within the same Docker network.
+     - '1433'                                           ## expose port 1433 for other container in same network.
+    volumes:                                            ## Ensures data survives container restarts.
+        - 'mssql_data1:/var/opt/mssql'                  ## Mounts a named volume (mssql_data) to container path /var/opt/mssql to persist data.
+volumes:                                                ## defines named volumes
+  mssql_data1:                                          ## named volume that Docker creates and manages.
+    driver: local                                       ## specifies the volume driver to use.
+
+## Feel free to try and let us know about your thoughts.
